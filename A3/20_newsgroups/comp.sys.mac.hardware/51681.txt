@@ -1,0 +1,8 @@
+young@is.s.u-tokyo.ac.jp (YOUNG Shio Hong) writes:
+>I am looking for ftp sites (where there are freewares or sharewares) for Mac.
+>It will help a lot if there are driver source codes in those ftp sites.
+>Any information is appreciated. 
+F A Q !
+Reference:
+	comp.sys.mac.wanted,comp.sys.mac.hardware,comp.answers,news.answers
+Sven :)

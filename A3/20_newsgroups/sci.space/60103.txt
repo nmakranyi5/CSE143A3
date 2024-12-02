@@ -1,0 +1,107 @@
+Acronym List for sci.astro, sci.space, and sci.space.shuttle:
+Edition 8, 1992 Dec 7
+Last posted: 1992 Aug 27
+This list is offered as a reference for translating commonly appearing
+acronyms in the space-related newsgroups.  If I forgot or botched your
+favorite acronym, please let me know!  Also, if there's an acronym *not*
+on this list that confuses you, drop me a line, and if I can figure
+it out, I'll add it to the list.
+Note that this is intended to be a reference for *frequently seen*
+acronyms, and is most emphatically *not* encyclopedic.  If I incorporated
+every acronym I ever saw, I'd soon run out of disk space!  :-)
+The list will be posted at regular intervals, every 30 days.  All
+comments regarding it are welcome; I'm reachable as bradfrd2@ncar.ucar.edu.
+Note that this just tells what the acronyms stand for -- you're on your
+own for figuring out what they *mean*!  Note also that the total number of
+acronyms in use far exceeds what I can list; special-purpose acronyms that
+are essentially always explained as they're introduced are omitted.
+Further, some acronyms stand for more than one thing; as of Edition 3 of
+the list, these acronyms appear on multiple lines, unless they're simply
+different ways of referring to the same thing.
+Thanks to everybody who's sent suggestions since the first version of
+the list, and especially to Garrett A. Wollman (wollman@griffin.uvm.edu),
+who is maintaining an independent list, somewhat more verbose in
+character than mine, and to Daniel Fischer (dfi@specklec.mpifr-bonn.mpg.de),
+who is maintaining a truly HUGE list (535 at last count) of acronyms and
+terms, mostly in German (which I read, fortunately).
+Special thanks this time to Ken Hollis at NASA, who sent me a copy of NASA
+Reference Publication 1059 Revised: _Space Transportation System and
+Associated Payloads: Glossary, Acronyms, and Abbreviations_, a truly
+mammoth tome -- almost 300 pages of TLAs.
+Special Bonus!  At the end of this posting, you will find a perl program
+written by none other than Larry Wall, whose purpose is to scramble the
+acronym list in an entertaining fashion.  Thanks, Larry!
+A&A: Astronomy and Astrophysics
+AW&ST: Aviation Week and Space Technology (a.k.a. AvLeak)
+C&T: Communications & Tracking
+LN2: Liquid N2 (Nitrogen)
+S/C: SpaceCraft
+#!/usr/bin/perl
+# 'alt', An Acronym Scrambling Program, by Larry Wall
+$THRESHOLD = 2;
+srand;
+while (<>) {
+    next unless /^([A-Z]\S+): */;
+    $key = $1;
+    $acro{$key} = $';
+    @words = split(/\W+/,$');
+    unshift(@words,$key);
+    $off = 0;
+    foreach $word (@words) {
+        next unless $word =~ /^[A-Z]/;
+        *w = $&;
+        vec($w{$word}, $off++ % 6, 1) = 1;
+    }
+}
+foreach $letter (A .. Z) {
+    *w = $letter;
+    @w = keys %w;
+    if (@w < $THRESHOLD) {
+        @d = `egrep '^$letter' /usr/dict/words`;
+        chop @d;
+        push(@w, @d);
+    }
+}
+foreach $key (sort keys %acro) {
+    $off = 0;
+    $acro = $acro{$key};
+    $acro =~ s/((([A-Z])[A-Z]*)[a-z]*)/ &pick($3, $2, $1, ++$off) || $& /eg;
+    print "$key: $acro";
+}
+sub pick {
+    local($letter, $prefix, $oldword, $off) = @_;
+    $i = 0;
+    if (length($prefix) > 1 && index($key,$prefix) < 0) {
+        if ($prefix eq $oldword) {
+            $prefix = '';
+        }
+        else {
+            $prefix = $letter;
+        }
+    }
+    if (length($prefix) > 1) {
+        local(*w) = substr($prefix,0,1);
+        do {
+            $word = $w[rand @w];
+        } until $word ne $oldword && $word =~ /^$prefix/i || ++$i > 30;
+        $word =~ s/^$prefix/$prefix/i;
+        $word;
+    }
+    elsif (length($prefix) == 1) {
+        local(*w) = $prefix;
+        do {
+            $word = $w[rand @w];
+        } until $word ne $oldword && vec($w{$word}, $off, 1) || ++$i > 10;
+        $word = "\u\L$word" if $word =~ tr/a-z/A-Z/;
+        $word;
+    }
+    else {
+        local(*w) = substr($oldword,0,1);
+        do {
+            $word = $w[rand @w];
+        } until $word ne $oldword && $word =~ tr/a-z/A-Z/ == 0 || ++$i > 30;
+        $word;
+    }
+}
+-- Mark Bradford (bradfrd2@ncar.ucar.edu) <> To err is human, to moo bovine.
+                  "It's an ill wind that gathers no moss."

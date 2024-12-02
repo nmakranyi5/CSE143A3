@@ -1,0 +1,3 @@
+  <1993Apr21.111919.5281@alf.uib.no> <DRAND.93Apr21114830@spinner.osf.org>
+You can also set the Foreground to the XOR of the foreground and background
+with TrueColor visuals).

@@ -1,0 +1,9 @@
+I got this from GW2000:
+Jon -
+To get 32bit access in windows all you have to do is edit the system.ini...
+Look under the 386Enhanced section and add this line to it
+"32bitdiskaccess=on"... This will give you the 32bitdiskaccess that you
+need... Thanks  :)
+Regards,
+Scot Oehlerking (G2kScooter)
+Gateway 2000
