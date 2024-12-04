@@ -15,6 +15,7 @@ import keras
 import tensorflow as tf
 import numpy as np
 from keras import layers
+import argparse
 
 
 # Model constants.
@@ -73,39 +74,27 @@ def vectorize_text(text, label):
     return vectorize_layer(text), label
 
 
-def build_model():
+def build_model(args):
     inputs = keras.Input(shape=(None,), dtype="int64")
 
     #########################
-    if False:
-        x = layers.Embedding(MAX_FEATURES, EMBEDDING_DIM)(inputs)
-        x = layers.Dropout(DROPOUT_RATE)(x)
+    x = layers.Embedding(MAX_FEATURES, EMBEDDING_DIM)(inputs)
+    x = layers.Dropout(DROPOUT_RATE)(x)
 
-        # Conv1D + global max pooling
-        x = layers.Conv1D(HIDDEN_LAYER_DIM, 7, padding="valid", activation="relu", strides=3)(x)
-        x = layers.Conv1D(HIDDEN_LAYER_DIM, 7, padding="valid", activation="relu", strides=3)(x)
-        x = layers.GlobalMaxPooling1D()(x)
-
-        # We add a vanilla hidden layer:
-        x = layers.Dense(HIDDEN_LAYER_DIM, activation="relu")(x)
-        x = layers.Dropout(DROPOUT_RATE)(x)
-
-        # 20 possible output classes for the usenet dataset.
-        predictions = layers.Dense(20, activation="softmax", name="predictions")(x)
-    
-    if True:
-        x = layers.Embedding(MAX_FEATURES, EMBEDDING_DIM)(inputs)
-        x = layers.Dropout(DROPOUT_RATE)(x)
-
+    if args.model == 'regularRnn':
         x = layers.Bidirectional(layers.SimpleRNN(HIDDEN_LAYER_DIM, activation="tanh"))(x)
-        # x = layers.Bidirectional(layers.LSTM(HIDDEN_LAYER_DIM, activation="tanh"))(x)
+    elif args.model == 'lstm':
+        x = layers.Bidirectional(layers.LSTM(HIDDEN_LAYER_DIM, activation="tanh"))(x)
+    else:
+        raise NotImplementedError()
+    
+    x = layers.Dense(HIDDEN_LAYER_DIM, activation="tanh")(x)
+    x = layers.Dropout(DROPOUT_RATE)(x)
 
-        predictions = layers.Dense(20, activation="tanh", name="predictions")(x)
+    predictions = layers.Dense(20, activation="softmax", name="predictions")(x)
     #########################
     
     model = keras.Model(inputs, predictions)
-    # model = keras.Sequential()
-    # model.add(layers.SimpleRNN(HIDDEN_LAYER_DIM, activation="tanh", input_shape=inputs))
 
     model.compile(
         loss="sparse_categorical_crossentropy",
@@ -116,6 +105,11 @@ def build_model():
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model', type=str, default='regularRnn',
+                        choices=['regularRnn', 'lstm'])
+    args = parser.parse_args()
+
     raw_train_ds, raw_val_ds, raw_test_ds = load_textfiles()
 
     # set the vocabulary!
@@ -132,7 +126,7 @@ def main():
     val_ds = val_ds.cache().prefetch(buffer_size=10)
     test_ds = test_ds.cache().prefetch(buffer_size=10)
 
-    model = build_model()
+    model = build_model(args)
 
     epochs = EPOCHS
     # Actually perform training.
