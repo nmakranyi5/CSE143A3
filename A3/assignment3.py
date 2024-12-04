@@ -136,10 +136,15 @@ def main():
     # Actually perform training.
     model.fit(train_ds, validation_data=val_ds, epochs=epochs)
 
+    print("Evaluating on val set...")
+    model.evaluate(val_ds)
+
     if args.do_test_set:
-        model.evaluate(val_ds)
-    else:
+        print("Evaluating on test set...")
         model.evaluate(test_ds)
+    
+    print("Evaluating on train set...")
+    model.evaluate(train_ds)
 
 
 if __name__ == "__main__":
