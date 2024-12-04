@@ -20,7 +20,7 @@ from keras import layers
 # Model constants.
 BATCH_SIZE = 32
 MAX_FEATURES = 20 * 1000
-EMBEDDING_DIM = 16
+EMBEDDING_DIM = 128
 SEQUENCE_LENGTH = 500
 HIDDEN_LAYER_DIM = 64
 DROPOUT_RATE = 0.5
@@ -77,15 +77,35 @@ def build_model():
     inputs = keras.Input(shape=(None,), dtype="int64")
 
     #########################
-    x = layers.Embedding(MAX_FEATURES, EMBEDDING_DIM)(inputs)
+    if False:
+        x = layers.Embedding(MAX_FEATURES, EMBEDDING_DIM)(inputs)
+        x = layers.Dropout(DROPOUT_RATE)(x)
 
-    x = layers.SimpleRNN(HIDDEN_LAYER_DIM, activation="tanh", dropout=DROPOUT_RATE)(x)
-    # x = layers.LSTM(HIDDEN_LAYER_DIM, activation="tanh", dropout=DROPOUT_RATE)(x)
+        # Conv1D + global max pooling
+        x = layers.Conv1D(HIDDEN_LAYER_DIM, 7, padding="valid", activation="relu", strides=3)(x)
+        x = layers.Conv1D(HIDDEN_LAYER_DIM, 7, padding="valid", activation="relu", strides=3)(x)
+        x = layers.GlobalMaxPooling1D()(x)
 
-    predictions = layers.Dense(20, activation="softmax", name="predictions")(x)
+        # We add a vanilla hidden layer:
+        x = layers.Dense(HIDDEN_LAYER_DIM, activation="relu")(x)
+        x = layers.Dropout(DROPOUT_RATE)(x)
+
+        # 20 possible output classes for the usenet dataset.
+        predictions = layers.Dense(20, activation="softmax", name="predictions")(x)
+    
+    if True:
+        x = layers.Embedding(MAX_FEATURES, EMBEDDING_DIM)(inputs)
+        x = layers.Dropout(DROPOUT_RATE)(x)
+
+        x = layers.Bidirectional(layers.SimpleRNN(HIDDEN_LAYER_DIM, activation="tanh"))(x)
+        # x = layers.Bidirectional(layers.LSTM(HIDDEN_LAYER_DIM, activation="tanh"))(x)
+
+        predictions = layers.Dense(20, activation="tanh", name="predictions")(x)
     #########################
     
     model = keras.Model(inputs, predictions)
+    # model = keras.Sequential()
+    # model.add(layers.SimpleRNN(HIDDEN_LAYER_DIM, activation="tanh", input_shape=inputs))
 
     model.compile(
         loss="sparse_categorical_crossentropy",
