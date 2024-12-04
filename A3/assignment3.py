@@ -17,11 +17,22 @@ import numpy as np
 from keras import layers
 
 
+# Model constants.
+BATCH_SIZE = 32
+MAX_FEATURES = 20 * 1000
+EMBEDDING_DIM = 16
+SEQUENCE_LENGTH = 500
+HIDDEN_LAYER_DIM = 64
+DROPOUT_RATE = 0.5
+LEARNING_RATE = 0.001
+EPOCHS = 20
+
+
 ## Loading the "20newsgroups" dataset.
 def load_textfiles():
     RANDOM_SEED = 1337
 
-    batch_size = 32
+    batch_size = BATCH_SIZE
     raw_train_ds = keras.utils.text_dataset_from_directory(
         "20_newsgroups",
         batch_size=batch_size,
@@ -49,16 +60,11 @@ def load_textfiles():
     return raw_train_ds, raw_val_ds, raw_test_ds
 
 
-# Model constants.
-max_features = 20 * 1000
-embedding_dim = 128
-sequence_length = 500
-
 vectorize_layer = keras.layers.TextVectorization(
     standardize="lower_and_strip_punctuation",
-    max_tokens=max_features,
+    max_tokens=MAX_FEATURES,
     output_mode="int",
-    output_sequence_length=sequence_length,
+    output_sequence_length=SEQUENCE_LENGTH,
 )
 
 
@@ -68,35 +74,23 @@ def vectorize_text(text, label):
 
 
 def build_model():
-    """
-    ## Build a model
-
-    We choose a simple 1D convnet starting with an `Embedding` layer.
-    """
-    # A integer input for vocab indices.
     inputs = keras.Input(shape=(None,), dtype="int64")
 
-    # Next, we add a layer to map those vocab indices into a space of dimensionality
-    # 'embedding_dim'.
-    x = layers.Embedding(max_features, embedding_dim)(inputs)
-    x = layers.Dropout(0.5)(x)
+    #########################
+    x = layers.Embedding(MAX_FEATURES, EMBEDDING_DIM)(inputs)
 
-    # Conv1D + global max pooling
-    x = layers.Conv1D(128, 7, padding="valid", activation="relu", strides=3)(x)
-    x = layers.Conv1D(128, 7, padding="valid", activation="relu", strides=3)(x)
-    x = layers.GlobalMaxPooling1D()(x)
+    x = layers.SimpleRNN(HIDDEN_LAYER_DIM, activation="tanh", dropout=DROPOUT_RATE)(x)
+    # x = layers.LSTM(HIDDEN_LAYER_DIM, activation="tanh", dropout=DROPOUT_RATE)(x)
 
-    # We add a vanilla hidden layer:
-    x = layers.Dense(128, activation="relu")(x)
-    x = layers.Dropout(0.5)(x)
-
-    # 20 possible output classes for the usenet dataset.
     predictions = layers.Dense(20, activation="softmax", name="predictions")(x)
+    #########################
+    
     model = keras.Model(inputs, predictions)
 
-    # Compile the model with binary crossentropy loss and an adam optimizer.
     model.compile(
-        loss="sparse_categorical_crossentropy", optimizer="adam", metrics=["accuracy"]
+        loss="sparse_categorical_crossentropy",
+        optimizer=keras.optimizers.Adam(learning_rate=LEARNING_RATE),
+        metrics=["accuracy"]
     )
     return model
 
@@ -120,7 +114,7 @@ def main():
 
     model = build_model()
 
-    epochs = 10
+    epochs = EPOCHS
     # Actually perform training.
     model.fit(train_ds, validation_data=val_ds, epochs=epochs)
 
