@@ -26,7 +26,7 @@ SEQUENCE_LENGTH = 500
 HIDDEN_LAYER_DIM = 64
 DROPOUT_RATE = 0.5
 LEARNING_RATE = 0.001
-EPOCHS = 20
+EPOCHS = 15
 
 
 ## Loading the "20newsgroups" dataset.
@@ -83,8 +83,10 @@ def build_model(args):
 
     if args.model == 'regularRnn':
         x = layers.Bidirectional(layers.SimpleRNN(HIDDEN_LAYER_DIM, activation="tanh"))(x)
+        # x = layers.SimpleRNN(HIDDEN_LAYER_DIM, activation="tanh")(x)
     elif args.model == 'lstm':
         x = layers.Bidirectional(layers.LSTM(HIDDEN_LAYER_DIM, activation="tanh"))(x)
+        # x = layers.LSTM(HIDDEN_LAYER_DIM, activation="tanh")(x)
     else:
         raise NotImplementedError()
     
@@ -108,6 +110,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', type=str, default='regularRnn',
                         choices=['regularRnn', 'lstm'])
+    parser.add_argument('--do-test-set', dest='do_test_set', action='store_true')
+    parser.add_argument('--no-do-test-set', dest='do_test_set', action='store_false')
     args = parser.parse_args()
 
     raw_train_ds, raw_val_ds, raw_test_ds = load_textfiles()
@@ -132,11 +136,10 @@ def main():
     # Actually perform training.
     model.fit(train_ds, validation_data=val_ds, epochs=epochs)
 
-    """
-    ## Evaluate the model on the test set or validation set.
-    """
-    ## model.evaluate(test_ds)
-    model.evaluate(val_ds)
+    if args.do_test_set:
+        model.evaluate(val_ds)
+    else:
+        model.evaluate(test_ds)
 
 
 if __name__ == "__main__":
